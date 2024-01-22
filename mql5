@@ -1,0 +1,92 @@
+mql5
+//+------------------------------------------------------------------+
+//|                           Prestige EA                             |
+//|          Developer: Forex Robot Easy Team - forexroboteasy.com    |
+//+------------------------------------------------------------------+
+
+// Include necessary libraries and define global variables
+#property strict
+#include <Trade\Trade.mqh>
+#include <Neuro\Neuro.mqh>
+
+CTrade Trade;
+CNeuro Neuro;
+
+//+------------------------------------------------------------------+
+//|                        OnInit function                            |
+//+------------------------------------------------------------------+
+void OnInit()
+{
+   // Initialize the neural network
+   Neuro.Initialize();
+
+   // Load historical market data for training
+   Neuro.LoadData('EURUSD', PERIOD_H1, '2010.01.01', '2021.01.01');
+
+   // Train the neural network using the loaded data
+   Neuro.Train();
+
+   // Print the training results
+   Neuro.PrintResults();
+}
+
+//+------------------------------------------------------------------+
+//|                        OnTick function                            |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+   // Get current market data
+   double currentPrice = SymbolInfoDouble(Symbol(), SYMBOL_ASK);
+
+   // Analyze market data using the trained neural network
+   double predictedPrice = Neuro.Analyze(currentPrice);
+
+   // Make trading decisions based on the analysis
+   if (predictedPrice > currentPrice)
+   {
+      // Execute a buy order
+      Trade.Buy();
+   }
+   else if (predictedPrice < currentPrice)
+   {
+      // Execute a sell order
+      Trade.Sell();
+   }
+}
+
+//+------------------------------------------------------------------+
+//|                        OnDeinit function                          |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+   // Clean up resources
+   Neuro.Cleanup();
+}
+
+//+------------------------------------------------------------------+
+//|                      Expert Advisor start function                |
+//+------------------------------------------------------------------+
+int start()
+{
+   // Check if the EA is enabled
+   if (!Trade.IsEnabled())
+   {
+      Print('Prestige EA is currently disabled.');
+      return 0;
+   }
+
+   // Check for market conditions and execute trades
+   OnTick();
+
+   // Monitor performance
+   double profitability = Trade.GetProfitability();
+   double winRate = Trade.GetWinRate();
+   double drawdown = Trade.GetDrawdown();
+
+   // Print performance metrics
+   Print('Profitability: ' + DoubleToString(profitability, 2));
+   Print('Win Rate: ' + DoubleToString(winRate, 2) + '%');
+   Print('Drawdown: ' + DoubleToString(drawdown, 2) + '%');
+
+   return 0;
+}
